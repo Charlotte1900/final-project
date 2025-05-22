@@ -87,7 +87,7 @@ bool load(const char *dictionary)
 
     char temp[LENGTH + 1 ];
     // Read each word in the file
-    while(fgets(temp, LENGTH + 1, source) != NULL)
+    while(fscanf(source, "%45s", temp) != EOF)
     {
         temp[strcspn(temp, "\n")] = '\0'; //手动去掉换行符
 
@@ -105,8 +105,8 @@ bool load(const char *dictionary)
             return false;
         }
         // Copy word into node
-        strcpy(new_node->word, temp);
-        new_node->next = NULL;
+        strncpy(new_node->word, temp, LENGTH);
+        new_node->word[LENGTH] = '\0'; // 确保 null 结尾
 
         // Hash the word
         unsigned int index = hash(temp);
