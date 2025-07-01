@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智能证件照生成系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .preview-img {
+      max-height: 300px;
+      object-fit: contain;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 5px;
+      margin-bottom: 15px;
+    }
+    .login-status {
+      margin-right: 15px;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <!-- 顶部导航栏 -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold text-primary" href="/">智能证件照生成系统</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><span id="loginStatus" class="nav-link login-status"></span></li>
+          <li class="nav-item"><a class="nav-link" href="/help">帮助</a></li>
+          <li class="nav-item"><a class="nav-link" href="/about">关于</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" id="logoutLink">退出</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主体功能区域 -->
+  <div class="container py-5">
+    <div class="text-center mb-4">
+      <h1 class="fw-bold">上传照片，智能生成标准证件照</h1>
+      <p class="text-muted">支持多种尺寸与背景色自动处理</p>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+
+        <!-- 上传模块 -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">上传设置</h5>
+            <div class="mb-3">
+              <label for="photoInput" class="form-label">选择照片（PNG/JPG格式）</label>
+              <input class="form-control" type="file" id="photoInput" accept=".png,.jpg,.jpeg,.bmp">
+            </div>
+
+            <!-- 证件照尺寸选择 -->
+            <div class="mb-3">
+              <label for="sizeSelect" class="form-label">选择尺寸</label>
+              <select class="form-select" id="sizeSelect">
+                <option value="1inch">1 寸 (295×413px)</option>
+                <option value="2inch" selected>2 寸 (413×626px)</option>
+                <option value="passport">护照 (33×48mm)</option>
+                <option value="visa_us">美国签证 (35×45mm)</option>
+                <option value="visa_uk">英国签证 (35×45mm)</option>
+              </select>
+            </div>
+
+            <!-- 背景色选择 -->
+            <div class="mb-3">
+              <label for="bgColorSelect" class="form-label">背景颜色</label>
+              <select class="form-select" id="bgColorSelect">
+                <option value="white">白色</option>
+                <option value="blue" selected>蓝色</option>
+                <option value="red">红色</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 图片预览 -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">预览结果</h5>
+            <div class="row">
+              <div class="col-md-6 text-center">
+                <h6>原始图片</h6>
+                <img id="originalPreview" 
+                    src="#" 
+                    alt="原始图片" 
+                    class="preview-img d-none">
+                <div id="originalPlaceholder" class="text-muted">未上传图片</div>
+              </div>
+              <div class="col-md-6 text-center">
+                <h6>处理结果</h6>
+                <img id="processedPreview" 
+                    src="#" 
+                    alt="处理结果" 
+                    class="preview-img d-none">
+                <div id="processedPlaceholder" class="text-muted">等待生成</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="d-grid gap-2">
+          <button id="generateBtn" class="btn btn-primary btn-lg" onclick="generatePhoto()">
+            <span id="generateText">生成证件照</span>
+            <span id="generateSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+          </button>
+          <button id="downloadBtn" class="btn btn-success" onclick="downloadPhoto()" disabled>下载照片</button>
+          <button class="btn btn-outline-secondary" onclick="resetAll()">重新开始</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <footer class="bg-white text-center py-3 mt-auto border-top">
+    <small class="text-muted">© 2025 智能证件照生成系统 - 不保存您的任何照片</small>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 检查登录状态
+    function checkLoginStatus() {
+      fetch('/check_login')
+        .then(response => response.json())
+        .then(data => {
+          if (data.logged_in) {
+            document.getElementById('loginStatus').textContent = `欢迎，${data.username}`;
+          } else {
+            window.location.href = '/login';
+          }
+        });
+    }
+
+    // 初始化页面时检查登录状态
+    checkLoginStatus();
+
+    // 退出登录
+    document.getElementById('logoutLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      fetch('/logout', { method: 'POST' })
+        .then(() => window.location.href = '/login');
+    });
+
+    // 文件选择预览
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        if (!file.type.match('image.*')) {
+          alert('请选择图片文件（PNG/JPG格式）');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const originalPreview = document.getElementById('originalPreview');
+          originalPreview.src = event.target.result;
+          originalPreview.classList.remove('d-none');
+          document.getElementById('originalPlaceholder').classList.add('d-none');
+          
+          // 重置处理结果区域
+          document.getElementById('processedPreview').src = '#';
+          document.getElementById('processedPreview').classList.add('d-none');
+          document.getElementById('processedPlaceholder').classList.remove('d-none');
+          document.getElementById('downloadBtn').disabled = true;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // 生成证件照
+    function generatePhoto() {
+      const fileInput = document.getElementById('photoInput');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('请先选择要处理的图片');
+        return;
+      }
+
+      const generateBtn = document.getElementById('generateBtn');
+      const generateText = document.getElementById('generateText');
+      const generateSpinner = document.getElementById('generateSpinner');
+      
+      // 显示加载状态
+      generateBtn.disabled = true;
+      generateText.textContent = '处理中...';
+      generateSpinner.classList.remove('d-none');
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('size', document.getElementById('sizeSelect').value);
+      formData.append('bgColor', document.getElementById('bgColorSelect').value);
+
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => { throw err; });
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.error) {
+          throw new Error(data.msg);
+        }
+        
+        // 显示处理结果
+        const processedPreview = document.getElementById('processedPreview');
+        processedPreview.src = data.processed_img + '?t=' + new Date().getTime(); // 防止缓存
+        processedPreview.classList.remove('d-none');
+        document.getElementById('processedPlaceholder').classList.add('d-none');
+        document.getElementById('downloadBtn').disabled = false;
+      })
+      .catch(error => {
+        alert('处理失败: ' + error.message);
+        console.error('Error:', error);
+      })
+      .finally(() => {
+        // 恢复按钮状态
+        generateBtn.disabled = false;
+        generateText.textContent = '生成证件照';
+        generateSpinner.classList.add('d-none');
+      });
+    }
+
+    // 下载照片
+    function downloadPhoto() {
+      const processedImg = document.getElementById('processedPreview').src;
+      if (!processedImg || processedImg === '#') {
+        alert('请先生成证件照');
+        return;
+      }
+      
+      const link = document.createElement('a');
+      link.href = processedImg;
+      link.download = '证件照_' + new Date().getTime() + '.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 重置所有
+    function resetAll() {
+      document.getElementById('photoInput').value = '';
+      document.getElementById('originalPreview').src = '#';
+      document.getElementById('originalPreview').classList.add('d-none');
+      document.getElementById('originalPlaceholder').classList.remove('d-none');
+      document.getElementById('processedPreview').src = '#';
+      document.getElementById('processedPreview').classList.add('d-none');
+      document.getElementById('processedPlaceholder').classList.remove('d-none');
+      document.getElementById('downloadBtn').disabled = true;
+      document.getElementById('sizeSelect').value = '2inch';
+      document.getElementById('bgColorSelect').value = 'blue';
+    }
+  </script>
+</body>
+</html>
