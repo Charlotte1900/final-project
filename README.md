@@ -1,69 +1,123 @@
-HEAD
-[知乎专栏](https://www.zhihu.com/people/itlf/columns)
+# Smart ID Photo Generator System
+#### Video Demo:  <URL HERE>
+#### Description:
 
-# aiphoto
-最近要去办事情，很多地方都需要证件照，最近刚好在看AI，人脸识别，图形识别相关的知识，就打算利用这些技术开发一个证件照功能
+# Smart ID Photo Generator System
+## Overview
+The Smart ID Photo Generator System is a web-based application that allows users to upload photos and automatically generate professional ID photos with various standard sizes and background colors. The system features face detection, background replacement, intelligent cropping, and an optional anime-style conversion.
 
-蓝底原始图：
+## Key Features
+- **Face Detection & Landmark Localization**: Uses Dlib's 68-point face model
+- **Background Replacement**: Powered by U²-Net for precise segmentation
+- **Smart Cropping**: Supports standard sizes (1-inch, 2-inch, passport, visa, etc.)
+- **Anime Style Conversion**: Optional fun feature to convert photos to anime style
+- **User Authentication**: Secure login and registration system
+- **Responsive UI**: Clean interface built with HTML and Bootstrap
 
-![image-20200715000133867](https://raw.githubusercontent.com/wiki/itainf/aiphoto/裁剪照片.assets/image-20200715000133867.png)
+## System Architecture
 
-关键特征描述：
+### Frontend
+- **Templates**:
+  - `layout.html`: Base template with header/footer
+  - `index.html`: Main application page
+  - `login.html`: User login
+  - `register.html`: User registration
+  - `about.html`: About page
+  - `help.html`: Help documentation
 
-![image-20200715000232798](https://raw.githubusercontent.com/wiki/itainf/aiphoto/裁剪照片.assets/image-20200715000232798.png)
+### Backend
+- **Core Modules**:
+  - `face_marks.py`: Face detection and landmark localization
+  - `ai_crop.py`: Intelligent image cropping and resizing
+  - `web_main.py`: Main Flask application with routes and processing logic
+  - `utils.py`: Helper functions for image processing
 
-裁剪后的2寸照片：
+### AI Models
+- **Face Detection**: Dlib's 68-point model
+- **Background Segmentation**: U²-Net (ONNX format)
+- **Inference Engine**: ONNX Runtime
 
-![image-20200715000251662](https://raw.githubusercontent.com/wiki/itainf/aiphoto/裁剪照片.assets/image-20200715000251662.png)
+## Development Environment
 
+### Requirements
+- **OS**: Windows 10/11
+- **Python**: 3.11
+- **Web Framework**: Flask
+- **Frontend**: HTML + Bootstrap
+- **Key Libraries**:
+  - Dlib (face detection)
+  - OpenCV, NumPy (image processing)
+  - ONNX Runtime (model inference)
+  - Werkzeug (security)
 
-# 文档
+### Directory Structure
+```
+project/
+├── static/              # Static resources (CSS, JS, images)
+├── templates/           # HTML templates
+│   ├── index.html       # Main page
+│   ├── about.html       # About page
+│   ├── help.html        # Help page
+│   ├── layout.html      # Base template
+│   ├── login.html       # Login page
+│   └── register.html    # Registration page
+├── models/              # Model files (e.g., u2net.onnx)
+├── img/                 # User uploads and processed images
+├── database.db          # SQLite user database
+├── face_marks.py        # Face detection
+├── ai_crop.py           # Image cropping
+├── web_main.py          # Main application
+├── utils.py             # Utility functions
+└── requirements.txt     # Dependency list
+```
 
-通过文档可以快速上手和了解项目。
+## Installation & Usage
 
-1.[python环境搭建](https://github.com/itainf/aiphoto/wiki/python%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)
+### Quick Start
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Run the application:
+   ```bash
+   python web_main.py
+   ```
+4. Access the system at: `http://localhost:5000`
 
-2.[卷积神经网络模型人像分割](https://github.com/itainf/aiphoto/wiki/%E5%8D%B7%E7%A7%AF%E6%A8%A1%E5%9E%8B%E4%BA%BA%E5%83%8F%E5%88%86%E5%89%B2)
+### Usage Flow
+1. Register/Login to the system
+2. Upload your photo
+3. System automatically processes:
+   - Face detection
+   - Background segmentation
+   - Image cropping
+4. Choose between standard ID photo or anime-style conversion
+5. Preview and download the result
 
-3.[利用PyMatting替换背景颜色](https://github.com/itainf/aiphoto/wiki/%E5%88%A9%E7%94%A8PyMatting%E7%B2%BE%E7%BB%86%E5%8C%96%E6%8A%A0%E5%9B%BE)
+## Technical Details
 
+### Core Algorithms
+- **Face Detection**: Uses Dlib's 68-point model to locate facial features
+- **Background Segmentation**: U²-Net generates alpha masks for precise background removal
+- **Image Cropping**: Intelligent sizing based on standard photo dimensions (configured in SIZE_MAP)
+- **Color Processing**: Handles RGB/BGR conversions and normalization for model input
 
-### 更新记录
+### Current Limitations
+- Processes only the first detected face in multi-person photos
+- May have imperfect edges with curly hair
+- Possible artifacts with complex backgrounds
 
-2020年7月4日更新
+### Future Improvements
+- Smarter face selection (e.g., largest or most centered face)
+- Specialized hair segmentation models (e.g., MODNet)
+- Edge expansion to prevent background filling issues
+- Enhanced error handling for edge cases
 
-本次更新版本： v20200704
+## Support
+For assistance, please:
+1. Check the Help page in the application
+2. Contact our support team through the About page
 
-本次更新了，通过卷积神经网络模型分割人像
-
-文档： [卷积模型人像分割](https://github.com/itainf/aiphoto/wiki/%E5%8D%B7%E7%A7%AF%E6%A8%A1%E5%9E%8B%E4%BA%BA%E5%83%8F%E5%88%86%E5%89%B2)
-
-
-
-2020年7月9日更新
-
-本次更新版本： v20200709
-
-本次更新了，通过PyMatting框架,利用trimap分割前景人像，将背景替换成证件照背景
-
-文档：[利用PyMatting替换成证件照背景](https://github.com/itainf/aiphoto/wiki/%E5%88%A9%E7%94%A8PyMatting%E7%B2%BE%E7%BB%86%E5%8C%96%E6%8A%A0%E5%9B%BE)
-
-
-2020年7月15日更新
-
-本次更新版本： v20200715
-
-本次更新了，通过dlib框架,裁剪成标准尺寸照片
-
-文档：[裁剪照片](https://github.com/itainf/aiphoto/wiki/%E8%A3%81%E5%89%AA%E7%85%A7%E7%89%87)
-
-
-2020年7月26日更新
-
-本次更新版本： v20200726
-
-文档： [小程序拍照上传生成证件照](https://github.com/itainf/aiphoto/wiki/%E5%B0%8F%E7%A8%8B%E5%BA%8F%E6%8B%8D%E7%85%A7%E4%B8%8A%E4%BC%A0%E7%94%9F%E6%88%90%E8%AF%81%E4%BB%B6%E7%85%A7)
-=======
-# final-project
-this is my final project for cs50
->>>>>>> 51f45a84628b27e31a43ca34db3fb55a9e5e4fed
+## License
+This project is for demonstration purposes. All model weights (U²-Net) should be used according to their original licenses.
